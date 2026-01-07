@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import joblib
@@ -74,4 +75,46 @@ def predict(data: PatientData):
         "prediction": result,
         "expected_features": EXPECTED_FEATURES,
         "database_status": db_status
+    }
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import joblib
+import numpy as np
+import os
+
+app = FastAPI()
+
+# Load ML assets
+model = joblib.load("model.pkl")
+scaler = joblib.load("scaler.pkl")
+EXPECTED_FEATURES = scaler.n_features_in_
+
+class PatientData(BaseModel):
+    name: str
+    age: int
+    symptoms: str
+    features: list[float]
+
+@app.get("/")
+def home():
+    return {"message": "LungShield API running"}
+
+@app.post("/predict")
+def predict(data: PatientData):
+    if len(data.features) != EXPECTED_FEATURES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Model expects {EXPECTED_FEATURES} features, but received {len(data.features)}"
+        )
+
+    sample = np.array(data.features).reshape(1, -1)
+    sample = scaler.transform(sample)
+    prediction = model.predict(sample)
+
+    result = "High Risk" if prediction[0] == 1 else "Low Risk"
+
+    return {
+        "prediction": result,
+        "expected_features": EXPECTED_FEATURES,
+        "database_status": "skipped"
     }
