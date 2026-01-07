@@ -3,4 +3,3 @@ uvicorn
 joblib
 numpy
 scikit-learn
-pyodbc
