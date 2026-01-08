@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import joblib
@@ -26,9 +25,8 @@ class PatientData(BaseModel):
 def get_connection():
     try:
         return pyodbc.connect(os.environ["AZURE_SQL_CONN"])
-    except Exception as e:
-        # Database may not be available during demo
-        return None
+    except:
+        return None  # allow demo without DB
 
 # ---------- ROUTES ----------
 
@@ -39,7 +37,6 @@ def home():
 @app.post("/predict")
 def predict(data: PatientData):
 
-    # Validate feature length
     if len(data.features) != EXPECTED_FEATURES:
         raise HTTPException(
             status_code=422,
@@ -56,7 +53,6 @@ def predict(data: PatientData):
 
     db_status = "skipped"
 
-    # Attempt database save (non-blocking)
     conn = get_connection()
     if conn:
         try:
@@ -75,46 +71,4 @@ def predict(data: PatientData):
         "prediction": result,
         "expected_features": EXPECTED_FEATURES,
         "database_status": db_status
-    }
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import joblib
-import numpy as np
-import os
-
-app = FastAPI()
-
-# Load ML assets
-model = joblib.load("model.pkl")
-scaler = joblib.load("scaler.pkl")
-EXPECTED_FEATURES = scaler.n_features_in_
-
-class PatientData(BaseModel):
-    name: str
-    age: int
-    symptoms: str
-    features: list[float]
-
-@app.get("/")
-def home():
-    return {"message": "LungShield API running"}
-
-@app.post("/predict")
-def predict(data: PatientData):
-    if len(data.features) != EXPECTED_FEATURES:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Model expects {EXPECTED_FEATURES} features, but received {len(data.features)}"
-        )
-
-    sample = np.array(data.features).reshape(1, -1)
-    sample = scaler.transform(sample)
-    prediction = model.predict(sample)
-
-    result = "High Risk" if prediction[0] == 1 else "Low Risk"
-
-    return {
-        "prediction": result,
-        "expected_features": EXPECTED_FEATURES,
-        "database_status": "skipped"
     }
