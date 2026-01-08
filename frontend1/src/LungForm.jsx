@@ -45,7 +45,7 @@ export default function LungForm() {
     const data = values.map(Number);
 
     // 🔴 FIX: Send all required backend fields
-    const res = await fetch("http://127.0.0.1:8000/predict", {
+    const res = await fetch("https://lung-cancer-detection-seven.vercel.app/", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({
