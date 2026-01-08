@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const API = "https://lung-cancer-detection-im8v.onrender.com";
+
 export default function LungForm() {
   const fields = [
     "Gender","Age","Smoking","Yellow Fingers","Anxiety","Peer Pressure",
@@ -44,10 +46,9 @@ export default function LungForm() {
 
     const data = values.map(Number);
 
-    // 🔴 FIX: Send all required backend fields
-    const res = await fetch("https://lung-cancer-detection-seven.vercel.app/", {
+    const res = await fetch(`${API}/predict`, {
       method: "POST",
-      headers: {"Content-Type":"application/json"},
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: "Demo User",
         age: data[1],
@@ -56,28 +57,22 @@ export default function LungForm() {
       })
     });
 
+    if (!res.ok) {
+      alert("Prediction failed. Please try again.");
+      return;
+    }
+
     const r = await res.json();
 
     const symptoms = data.slice(2);
     const allNo = symptoms.every(v => v === 1);
 
     if (allNo) {
-      setPopup({ 
-        type: "safe", 
-        message: "Lung cancer NOT DETECTED — No significant signs observed"
-      });
-    }
-    else if (r.prediction === "High Risk") {
-      setPopup({ 
-        type: "danger", 
-        message: "Lung cancer DETECTED — High risk. Immediate medical consultation advised."
-      });
-    }
-    else {
-      setPopup({ 
-        type: "safe", 
-        message: "Lung cancer NOT DETECTED — No significant signs observed"
-      });
+      setPopup({ type: "safe", message: "Lung cancer NOT DETECTED — No significant signs observed" });
+    } else if (r.prediction === "High Risk") {
+      setPopup({ type: "danger", message: "Lung cancer DETECTED — High risk. Immediate medical consultation advised." });
+    } else {
+      setPopup({ type: "safe", message: "Lung cancer NOT DETECTED — No significant signs observed" });
     }
   }
 
@@ -90,7 +85,6 @@ export default function LungForm() {
   return (
     <div style={{background:"#e8f0f8",minHeight:"100vh",padding:"30px"}}>
 
-      {/* Sticky Legend */}
       <div style={legendBox}>
         <b>Legend</b><br/>
         <span style={badge}>0</span> Female &nbsp;
@@ -99,23 +93,14 @@ export default function LungForm() {
         <span style={badge}>2</span> Yes
       </div>
 
-      {/* Main Card */}
       <div style={card}>
-        <h2 style={{textAlign:"center",color:"#0a2c5c"}}>
-          Lung Cancer Risk Prediction
-        </h2>
+        <h2 style={{textAlign:"center",color:"#0a2c5c"}}>Lung Cancer Risk Prediction</h2>
 
         {fields.map((f,i)=>(
           <div key={i} style={{marginBottom:14}}>
             <label style={{fontWeight:600}}>{f}</label>
-            <input
-              value={values[i]}
-              onChange={e=>handleChange(i,e.target.value)}
-              style={inputStyle}
-            />
-            <div style={{color:"#dc2626",fontSize:12}}>
-              {errors[i]}
-            </div>
+            <input value={values[i]} onChange={e=>handleChange(i,e.target.value)} style={inputStyle}/>
+            <div style={{color:"#dc2626",fontSize:12}}>{errors[i]}</div>
           </div>
         ))}
 
@@ -125,19 +110,11 @@ export default function LungForm() {
         </div>
       </div>
 
-      {/* Popup Modal */}
       {popup && (
         <div style={overlay}>
-          <div style={{
-            ...popupBox,
-            borderColor: popup.type === "danger" ? "#dc2626" : "#16a34a"
-          }}>
+          <div style={{...popupBox,borderColor: popup.type === "danger" ? "#dc2626" : "#16a34a"}}>
             <span onClick={()=>setPopup(null)} style={closeBtn}>×</span>
-            <h3 style={{
-              color: popup.type === "danger" ? "#dc2626" : "#16a34a"
-            }}>
-              {popup.message}
-            </h3>
+            <h3 style={{color: popup.type === "danger" ? "#dc2626" : "#16a34a"}}>{popup.message}</h3>
           </div>
         </div>
       )}
